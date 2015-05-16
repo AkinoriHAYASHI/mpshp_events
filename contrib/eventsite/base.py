@@ -273,7 +273,8 @@ class Form:
                 url += urlencode(values)
             data = None
         else:
-            data = urlencode(values).encode(self._charset)
+            data = urlencode(values, encoding=self._charset).encode(self._charset)
+            print(data)
         return self._opener.open(url, data)
 
     def _set_html(self):
@@ -281,13 +282,19 @@ class Form:
             raise ValueError('_base_url must be set.')
 
         if self._html_str is None:
-            url = self._base_url + self._path
+            if self._base_url[-1] != '/' and self._base_url[0] != '/':
+                url = self._base_url + '/' + self._path
+            elif self._base_url[-1] == '/' and self._base_url[0] == '/':
+                url = self._base_url[:-1] + self._path
+            else:
+                url = self._base_url + self._path
             response = self._opener.open(url)
             self._html_str = response.read()
 
         self._html = lxml.html.fromstring(self._html_str, self._base_url)
         if self._html.cssselect('meta[http-equiv="Content-Type"]'):
             self._charset = self._html.cssselect('meta[http-equiv="Content-Type"]')[0].get('content').split('charset=')[-1]
+            print(self._charset)
 
     def _set_form(self):
         raise exceptions.MethodNotImplemented()
@@ -328,5 +335,5 @@ def _create_test_event():
     event = Event(name='MPS', start_datetime=event_time, end_datetime=event_time, due_datetime=event_time,
                   prefecture='東京都', address='文京区', building='', room='', map_url='', place_hp='',
                   organizers=[], members=[], max_members=15, price=500,
-                  hp_url='', detail='', note='', twitter_tag='')
+                  hp_url='', detail='テスト', note='', twitter_tag='')
     return event

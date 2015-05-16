@@ -20,6 +20,8 @@ __author__ = 'Junya Kaneko <junya@mpsamurai.org>'
 from . import base
 from . import exceptions
 
+import re
+
 class MonthFormat(base.MonthFormat):
     def get_month(self, datetime_obj):
         return str(datetime_obj.month)
@@ -55,15 +57,18 @@ class LoginBirthdayForm(base.Form):
     def _set_form(self):
         for form in self._html.forms:
             if form.fields['mode'] == "additional_auth_post":
-                return form
+                self._form = form
+                return
         raise exceptions.FormNotFound()
 
     def _fill_form(self):
-        self._form['year'] = str(self._year)
-        self._form['month'] = str(self._month)
-        self._day['day'] = str(self._day)
+        self._form.fields['year'] = str(self._year)
+        self._form.fields['month'] = str(self._month)
+        self._form.fields['day'] = str(self._day)
 
 class CommunityEventForm(base.EventForm):
+    _base_url = 'http://mixi.jp'
+    _path = ''
 
     _prefectures = {
         '北海道': 1,
@@ -114,6 +119,13 @@ class CommunityEventForm(base.EventForm):
         '鹿児島県': 46,
         '沖縄県': 47,
         }
+    @property
+    def community_id(self):
+        return re.match(r'add_event.pl\?id=(\d+)', self._path).group(1)
+
+    @community_id.setter
+    def community_id(self, community_id):
+        self._path = 'add_event.pl?id=%s' % community_id
 
     def _set_form(self):
         for form in self._html.forms:
@@ -138,3 +150,20 @@ class CommunityEventForm(base.EventForm):
         self._form.fields['deadline_year'] = self._event.due_year
         self._form.fields['deadline_month'] = self._event.due_month
         self._form.fields['deadline_day'] = self._event.due_day
+
+    def submit(self, extra_values=None):
+        if not self.community_id:
+            raise exceptions.FormSubmissionFailuer('community_id must be specified.')
+        else:
+            return super(CommunityEventForm, self).submit(extra_values)
+
+
+class CommunityEventConfirmationForm(CommunityEventForm):
+    def _set_form(self):
+        for form in self._html.forms:
+            if 'submit' in form.fields and form.fields['submit'] == 'confirm':
+                self._form = form
+                return
+
+    def _fill_form(self):
+        pass
