@@ -307,14 +307,14 @@ class Form:
 
 
 class LoginForm(Form):
-    def __init__(self, username, password, opener=None):
-        super(LoginForm, self).__init__(opener)
+    def __init__(self, username, password, opener=None, html_str=None, charset='utf-8'):
+        super(LoginForm, self).__init__(opener, html_str, charset)
         self._username = username
         self._password = password
 
 class EventForm(Form):
-    def __init__(self, event, opener=None):
-        super(EventForm, self).__init__(opener)
+    def __init__(self, event, opener=None, html_str=None, charset='utf-8'):
+        super(EventForm, self).__init__(opener, html_str, charset)
         self._event = event
 
 
