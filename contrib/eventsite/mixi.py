@@ -41,6 +41,28 @@ class LoginForm(base.LoginForm):
         self._form.fields['email'] = self._username
         self._form.fields['password'] = self._password
 
+
+class LoginBirthdayForm(base.Form):
+    _base_url = 'https://mixi.jp'
+    _path = ''
+
+    def __init__(self, year, month, day, opener=None, html_str=None, charset='euc-jp'):
+        super(LoginBirthdayForm, self).__init__(opener, html_str, charset)
+        self._year = year
+        self._month = month
+        self._day = day
+
+    def _set_form(self):
+        for form in self._html.forms:
+            if form.fields['mode'] == "additional_auth_post":
+                return form
+        raise exceptions.FormNotFound()
+
+    def _fill_form(self):
+        self._form['year'] = str(self._year)
+        self._form['month'] = str(self._month)
+        self._day['day'] = str(self._day)
+
 class CommunityEventForm(base.EventForm):
 
     _prefectures = {

@@ -243,15 +243,22 @@ class Form:
     _path = ''
     _charset = ''
 
-    def __init__(self, opener=None):
+    def __init__(self, opener=None, html_str=None, charset='utf-8'):
         if opener is None:
             cookiejar = CookieJar()
             self._opener = build_opener(HTTPCookieProcessor(cookiejar))
         else:
             self._opener = opener
 
+        self._charset = charset
+
+        self._html_str = html_str
         self._html = None
         self._form = None
+
+    @property
+    def charset(self):
+        return self._charset
 
     @property
     def opener(self):
@@ -266,7 +273,6 @@ class Form:
                 url += urlencode(values)
             data = None
         else:
-            print(values)
             data = urlencode(values).encode(self._charset)
         return self._opener.open(url, data)
 
@@ -274,13 +280,14 @@ class Form:
         if self._base_url is None:
             raise ValueError('_base_url must be set.')
 
-        url = self._base_url + self._path
-        response = self._opener.open(url)
+        if self._html_str is None:
+            url = self._base_url + self._path
+            response = self._opener.open(url)
+            self._html_str = response.read()
 
-        self._charset = response.headers.get_content_charset()
-
-        html_str = response.read()
-        self._html = lxml.html.fromstring(html_str, self._base_url)
+        self._html = lxml.html.fromstring(self._html_str, self._base_url)
+        if self._html.cssselect('meta[http-equiv="Content-Type"]'):
+            self._charset = self._html.cssselect('meta[http-equiv="Content-Type"]')[0].get('content').split('charset=')[-1]
 
     def _set_form(self):
         raise exceptions.MethodNotImplemented()
